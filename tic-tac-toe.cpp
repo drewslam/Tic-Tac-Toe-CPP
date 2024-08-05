@@ -1,4 +1,6 @@
 #include <iostream>
+#include <cstdlib>
+#include <ctime>
 
 class Player {
 private:
@@ -23,7 +25,7 @@ public:
     }
 
     void displayGameBoard() {
-        std::cout << "  A   B   C\n";
+        std::cout << "\n  A   B   C\n";
         std::cout << "1[" << gameBoard[0][0] << "] [" << gameBoard[0][1] << "] [" << gameBoard[0][2] << "]\n";
         std::cout << "2[" << gameBoard[1][0] << "] [" << gameBoard[1][1] << "] [" << gameBoard[1][2] << "]\n";
         std::cout << "3[" << gameBoard[2][0] << "] [" << gameBoard[2][1] << "] [" << gameBoard[2][2] << "]\n";
@@ -94,6 +96,32 @@ public:
         std::cout << "The game is a draw!\n";
         return true;
     }
+
+
+    bool isPositionOccupied(int row, int col) {
+        return gameBoard[row][col] != ' '; 
+    }
+
+    void setPosition(Player* player, int row, int col) {
+        gameBoard[row][col] = player->getID();
+        displayGameBoard();
+    }
+};
+
+class ComputerPlayer : public Player {
+public:
+    ComputerPlayer(char id) : Player(id) {
+        srand(time(0)); // Seed for random number generation
+    }
+
+    void selectPosition(Game* game) {
+        int row, col;
+        do {
+            row = rand() % 3;
+            col = rand() % 3;
+        } while (game->isPositionOccupied(row, col));
+        game->setPosition(this, row, col);
+    }
 };
 
 int main() {
@@ -110,7 +138,13 @@ int main() {
     } while (id2 == id1);
 
     Player* player1 = new Player(id1);
-    Player* player2 = new Player(id2);
+    Player* player2 = nullptr;
+    if (id2 == 'C') {
+        player2 = new ComputerPlayer('C');
+    } else {
+        player2 = new Player(id2);
+    }
+
     Player* currentPlayer = player2;
     Game* currentGame = new Game();
     bool gameOver = false;
@@ -126,11 +160,17 @@ int main() {
             currentPlayer = player1;
         }
 
-        std::cout << "\nInput " << currentPlayer->getID() << ": ";
-        char col;
-        int row;
-        std::cin >> col >> row;
-        currentGame->selectPosition(currentPlayer, col, row);
+        if (currentPlayer == player2 && id2 == 'C') {
+            std::cout << "\nComputer's Turn: \n";
+            static_cast<ComputerPlayer*>(currentPlayer)->selectPosition(currentGame);
+        } else {
+            std::cout << "\nInput " << currentPlayer->getID() << ": ";
+            char col;
+            int row;
+            std::cin >> col >> row;
+            currentGame->selectPosition(currentPlayer, col, row);
+        }
+
         if (currentGame->gameWon(currentPlayer)) {
             gameOver = true;
         } else if (currentGame->isDraw()) {
